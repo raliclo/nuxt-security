@@ -57,6 +57,7 @@ export const defaultSecurityConfig = (serverlUrl: string, strict: boolean) => {
       },
       whiteList: undefined,
       ipHeader: undefined,
+      trustProxy: false,
       ...defaultThrowErrorValue
     },
     xssValidator: {

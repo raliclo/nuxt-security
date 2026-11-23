@@ -7,7 +7,11 @@ describe('[nuxt-security] Nonce', async () => {
     rootDir: fileURLToPath(new URL('./fixtures/ssrNonce', import.meta.url))
   })
 
-  const expectedNonceElements = 7
+  function expectNonces(text: string, nonce: string | undefined) {
+    const tags = text.match(/<(?:script|link|style)\b[^>]*>/gi) ?? []
+    expect(tags.length).toBeGreaterThan(0)
+    for (const tag of tags) expect(tag).toContain(`nonce="${nonce}"`)
+  }
 
   it('injects `nonce` attribute in response', async () => {
     const res = await fetch('/')
@@ -16,13 +20,11 @@ describe('[nuxt-security] Nonce', async () => {
     const nonce = cspHeaderValue?.match(/'nonce-(.*?)'/)?.[1]
 
     const text = await res.text()
-    const nonceMatch = `nonce="${nonce}"`.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-    const elementsWithNonce = text.match(new RegExp(nonceMatch, 'g'))?.length ?? 0
 
     expect(res).toBeDefined()
     expect(res).toBeTruthy()
     expect(nonce).toBeDefined()
-    expect(elementsWithNonce).toBe(expectedNonceElements)
+    expectNonces(text, nonce)
   })
 
   it('renews nonce even if mode is `check`', async () => {
@@ -47,13 +49,11 @@ describe('[nuxt-security] Nonce', async () => {
     const nonce = cspHeaderValue!.match(/'nonce-(.*?)'/)?.[1]
 
     const text = await res.text()
-    const nonceMatch = `nonce="${nonce}"`.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-    const elementsWithNonce = text.match(new RegExp(nonceMatch, 'g'))?.length ?? 0
 
     expect(res).toBeDefined()
     expect(res).toBeTruthy()
     expect(nonce).toBeDefined()
-    expect(elementsWithNonce).toBe(expectedNonceElements + 1) // 1 extra for loader.js in useHead
+    expectNonces(text, nonce)
   })
 
   it('removes the nonce from the CSP header when nonce is disabled', async () => {
@@ -73,13 +73,27 @@ describe('[nuxt-security] Nonce', async () => {
     const nonce = cspHeaderValue?.match(/'nonce-(.*?)'/)?.[1]
 
     const text = await res.text()
-    const nonceMatch = `nonce="${nonce}"`.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-    const elementsWithNonce = text.match(new RegExp(nonceMatch, 'g'))?.length ?? 0
 
     expect(res).toBeDefined()
     expect(res).toBeTruthy()
     expect(nonce).toBeDefined()
-    expect(elementsWithNonce).toBe(expectedNonceElements + 1) // one extra for the style tag
+    expectNonces(text, nonce)
+  })
+
+  it('injects `nonce` attribute in every tag after a style with escaped quotes', async () => {
+    const res = await fetch('/css-escaped-quotes')
+
+    const cspHeaderValue = res.headers.get('content-security-policy')
+    const nonce = cspHeaderValue?.match(/'nonce-(.*?)'/)?.[1]
+
+    const text = await res.text()
+    const tags = text.match(/<(?:script|link|style)\b[^>]*>/g) ?? []
+    const tagsWithoutNonce = tags.filter((tag) => !tag.includes(`nonce="${nonce}"`))
+
+    expect(nonce).toBeDefined()
+    expect(text).toMatch('image\\.svg\\"\\)')
+    expect(tags.some((tag) => tag.startsWith('<script') && tag.includes('type="module"'))).toBe(true)
+    expect(tagsWithoutNonce).toEqual([])
   })
 
   it('removes the nonces in pre-render mode', async () => {

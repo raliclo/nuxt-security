@@ -22,6 +22,8 @@ export type RateLimiter = {
   whiteList?: string[];
   throwError?: boolean;
   ipHeader?: string;
+  /** Trust forwarded IPs only behind a proxy that overwrites them. / 僅在可信代理覆寫標頭時啟用。 */
+  trustProxy?: boolean;
 };
 
 export type XssValidator = {

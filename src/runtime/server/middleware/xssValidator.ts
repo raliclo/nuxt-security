@@ -1,6 +1,7 @@
 import { defineEventHandler, createError, getQuery, readBody, readMultipartFormData } from 'h3'
 import { FilterXSS, type IFilterXSSOptions } from 'xss'
 import { resolveSecurityRules } from '../../nitro/context'
+import { hasUnsafeXssPayload } from '../../../utils/xss'
 import type { HTTPMethod } from '../../../types/middlewares'
 
 export default defineEventHandler(async(event) => {
@@ -33,15 +34,7 @@ export default defineEventHandler(async(event) => {
             : await readBody(event)
         // Fix for problems when one middleware is returning an error and it is catched in the next
         if (valueToFilter && Object.keys(valueToFilter).length) {
-          // Only skip XSS filtering if statusMessage === 'Bad Request' (for error propagation)
-          if (valueToFilter.statusMessage === 'Bad Request') {
-            return
-          }
-          const stringifiedValue = JSON.stringify(valueToFilter)
-          const processedValue = xssValidator.process(
-            JSON.stringify(valueToFilter)
-          )
-          if (processedValue !== stringifiedValue) {
+          if (hasUnsafeXssPayload(valueToFilter, xssValidator)) {
             const badRequestError = {
               statusCode: 400,
               statusMessage: 'Bad Request'

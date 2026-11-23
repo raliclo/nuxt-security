@@ -1,10 +1,10 @@
-import { defineNuxtModule, addServerHandler, installModule, addVitePlugin, addServerPlugin, createResolver, addImportsDir, useNitro, addServerImports, addTypeTemplate, hasNuxtModule } from '@nuxt/kit'
+import { defineNuxtModule, addServerHandler, installModule, addVitePlugin, addServerPlugin, createResolver, addImportsDir, useNitro, addServerImports, addTypeTemplate, hasNuxtModule, importModule } from '@nuxt/kit'
 import { existsSync } from 'node:fs'
 import { readFile, readdir } from 'node:fs/promises'
 import { join, isAbsolute } from 'pathe'
 import { defu } from 'defu'
 import viteRemove from 'unplugin-remove/vite'
-import { getHeadersApplicableToAllResources } from './utils/headers'
+import { getHeadersApplicableToAllResources, getKeyFromName, headerStringFromObject } from './utils/headers'
 import { generateHash } from './utils/crypto'
 import { defuReplaceArray } from './utils/merge'
 import { defaultSecurityConfig } from './defaultConfig'
@@ -25,14 +25,14 @@ export default defineNuxtModule<ModuleOptions>({
     // Auto-disable security middleware for @nuxt/hints hydration route only if hints module is present
     if (hasNuxtModule('@nuxt/hints')) {
       nuxt.options.routeRules = nuxt.options.routeRules || {}
-      nuxt.options.routeRules['/__nuxt_hints/**'] = {
+      nuxt.options.routeRules['/__nuxt_hints/**'] = defuReplaceArray(nuxt.options.routeRules['/__nuxt_hints/**'], {
         security: {
           rateLimiter: false,
           requestSizeLimiter: false,
           xssValidator: false,
           corsHandler: false,
         }
-      }
+      })
     }
     const resolver = createResolver(import.meta.url)
 
@@ -88,6 +88,11 @@ export default defineNuxtModule<ModuleOptions>({
             },
             nuxt.options.vite.build
           )
+        } else if (Number((await importModule<{ version: string }>('vite', { paths: nuxt.options.modulesDir })).version.split('.')[0]) >= 8) {
+          // Vite 8 uses Oxc minification. / Vite 8 改用 Oxc 壓縮設定。
+          nuxt.options.vite.build = defuReplaceArray({
+            rolldownOptions: { output: { minify: { compress: { dropConsole: true, dropDebugger: true } } } }
+          }, nuxt.options.vite.build)
         } else {
           // In case of esbuild, set the drop option
           nuxt.options.vite.esbuild = defu(
@@ -125,6 +130,20 @@ export default defineNuxtModule<ModuleOptions>({
         )
       }
     }
+
+    // Normalize legacy headers before Nitro stringifies false or object values. / 在 Nitro 字串化前正規化舊格式標頭。
+    nuxt.hook('nitro:config', config => {
+      for (const rule of Object.values(config.routeRules || {})) {
+        if (!rule?.headers) continue
+        for (const [name, value] of Object.entries(rule.headers)) {
+          const key = getKeyFromName(name)
+          if (key && (value === false || typeof value === 'object')) {
+            rule.security = defuReplaceArray(rule.security, { headers: { [key]: value } })
+            rule.headers[name] = headerStringFromObject(key, value)
+          }
+        }
+      }
+    })
 
     // Register nitro plugin to manage security rules at the level of each route
     addServerPlugin(resolver.resolve('./runtime/nitro/plugins/00-routeRules'))
@@ -204,15 +223,11 @@ export default defineNuxtModule<ModuleOptions>({
     addImportsDir(resolver.resolve('./runtime/composables'))
     addServerImports([{ name: 'defuReplaceArray', from: resolver.resolve('./utils/merge')}])
 
-    // Record SRI Hashes in the Virtual File System at build time
-    let sriHashes: Record<string, string> = {}
+    // Hash lazily so public assets finalized in `rollup:before` are included.
     nuxt.options.nitro.virtual = defu(
-      { '#sri-hashes': () => `export default ${JSON.stringify(sriHashes)}` },
+      { '#sri-hashes': async () => `export default ${JSON.stringify(await hashBundledAssets(useNitro()))}` },
       nuxt.options.nitro.virtual
     )
-    nuxt.hook('nitro:build:before', async(nitro) => {
-      sriHashes = await hashBundledAssets(nitro)
-    })
 
     addTypeTemplate({
       filename: "types/nuxt-security.d.ts",
@@ -448,7 +463,11 @@ async function hashBundledAssets(nitro: Nitro) {
             // If the cdnURL option was set, the url will be in the form https://...
             const relativePath = isAbsolute(fullPath) ? fullPath.slice(1) : fullPath
             const abdsoluteCdnUrl = appCdnUrl.endsWith('/') ? appCdnUrl : appCdnUrl + '/'
-            url = new URL(relativePath, abdsoluteCdnUrl).href
+            try {
+              url = new URL(relativePath, abdsoluteCdnUrl).href
+            } catch {
+              url = join(appCdnUrl, relativePath)
+            }
           } else {
             // If not, the url will be in a relative form: /_nuxt/...
             url = join('/', appBaseUrl, fullPath)

@@ -6,10 +6,10 @@ import defu from 'defu'
 import { useRuntimeConfig } from 'nitropack/runtime'
 
 const FILE_UPLOAD_HEADER = 'multipart/form-data'
-const runtimeConfig = useRuntimeConfig();
-const strict = runtimeConfig.security?.strict ?? false;
-
-const defaultSizeLimiter = defaultSecurityConfig('', strict).requestSizeLimiter as Required<RequestSizeLimiter>
+const getDefaults = (event: Parameters<typeof useRuntimeConfig>[0]) => {
+  const strict = useRuntimeConfig(event).security?.strict ?? false
+  return defaultSecurityConfig('', strict).requestSizeLimiter as Required<RequestSizeLimiter>
+}
 
 export default defineEventHandler((event) => {
   const rules  = resolveSecurityRules(event)
@@ -17,7 +17,7 @@ export default defineEventHandler((event) => {
   if (rules.enabled && rules.requestSizeLimiter) {
     const requestSizeLimiter = defu(
       rules.requestSizeLimiter,
-      defaultSizeLimiter,
+      getDefaults(event),
     )
     if (['POST', 'PUT', 'DELETE'].includes(event.node.req.method!)) {
       const contentLengthValue = getRequestHeader(event, 'content-length')

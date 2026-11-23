@@ -1,6 +1,7 @@
 import { defineNitroPlugin, useStorage } from 'nitropack/runtime'
 import { getResponseHeaders, setResponseHeaders } from 'h3'
 import type { OutgoingHttpHeaders } from 'http'
+import { savePrerenderedHeaders } from '../../../utils/prerenderedHeaders'
 import { resolveSecurityRules } from '../context'
 
 /**
@@ -26,24 +27,7 @@ export default defineNitroPlugin(async(nitroApp) => {
     })
 
     nitroApp.hooks.hook('close', async() => {
-      // We need to convert header values that are provided in array format
-      // Also we eliminate the x-nitro-prerender header
-      const headers = Object.fromEntries(
-        Object.entries(prerenderedHeaders)
-        .map(([path, headers]) => {
-          const headersEntries = Object.entries(headers)
-            .filter(([header]) => header !== 'x-nitro-prerender')
-            .map(([header, value]) => {
-              if (Array.isArray(value)) {
-                return [header, value.join(';')]
-              } else {
-                return [header, value]
-              }
-            })
-          return [path, Object.fromEntries(headersEntries)]
-        })
-      )
-      await useStorage('build:nuxt-security').setItem('headers.json', headers)
+      await savePrerenderedHeaders(prerenderedHeaders, useStorage('build:nuxt-security'))
     })
   }
 
