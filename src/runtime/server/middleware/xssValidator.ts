@@ -1,4 +1,4 @@
-import { defineEventHandler, createError, getQuery, readBody, readMultipartFormData } from 'h3'
+import { getMethod, defineEventHandler, createError, getQuery, getRequestHeader, getBodyEvent, readBody, readMultipartFormData } from '#nuxt-security/server'
 import { FilterXSS, type IFilterXSSOptions } from 'xss'
 import { resolveSecurityRules } from '../../nitro/context'
 import { hasUnsafeXssPayload } from '../../../utils/xss'
@@ -17,21 +17,21 @@ export default defineEventHandler(async(event) => {
     }
     const xssValidator = new FilterXSS(filterOpt)
 
-    if (event.node.req.socket.readyState !== 'readOnly') {
+    {
       if (
         rules.xssValidator.methods &&
         rules.xssValidator.methods.includes(
-          event.node.req.method! as HTTPMethod
+          getMethod(event)! as HTTPMethod
         )
       ) {
         const valueToFilter =
-          event.node.req.method === 'GET'
+          getMethod(event) === 'GET'
             ? getQuery(event)
-            : event.node.req.headers['content-type']?.includes(
+            : getRequestHeader(event, 'content-type')?.includes(
                 'multipart/form-data'
               )
-            ? await readMultipartFormData(event)
-            : await readBody(event)
+            ? await readMultipartFormData(getBodyEvent(event))
+            : await readBody(getBodyEvent(event))
         // Fix for problems when one middleware is returning an error and it is catched in the next
         if (valueToFilter && Object.keys(valueToFilter).length) {
           if (hasUnsafeXssPayload(valueToFilter, xssValidator)) {

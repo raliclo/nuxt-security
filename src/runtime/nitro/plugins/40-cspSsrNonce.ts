@@ -1,4 +1,4 @@
-import { defineNitroPlugin } from 'nitropack/runtime'
+import { defineNitroPlugin, getInheritedNonce } from '#nuxt-security/server'
 import { resolveSecurityRules } from '../context'
 import { generateRandomNonce } from '../../../utils/crypto'
 import { injectNonceToTags } from '../../../utils/nonce'
@@ -24,7 +24,8 @@ export default defineNitroPlugin((nitroApp) => {
 
     const rules = resolveSecurityRules(event)
     if (rules.enabled && rules.nonce && !import.meta.prerender) {
-      const nonce = generateRandomNonce()
+      const inherited = /(?:^|\/)__nuxt_island\//.test(event.path.split('?')[0]) ? getInheritedNonce(event) : undefined
+      const nonce = inherited || generateRandomNonce()
       event.context.security!.nonce = nonce
     }
   })
@@ -36,7 +37,7 @@ export default defineNitroPlugin((nitroApp) => {
     if (
       !rules.enabled ||
       !rules.headers ||
-      !rules.headers.contentSecurityPolicy ||
+      !(rules.headers.contentSecurityPolicy || rules.headers.contentSecurityPolicyReportOnly) ||
       !rules.nonce
     ) {
       return
@@ -57,4 +58,12 @@ export default defineNitroPlugin((nitroApp) => {
       )
     }
   })
+  // Streaming emits hydration/config tags after the shell. / 串流在 shell 之後才輸出 hydration/config。
+  nitroApp.hooks.hook('render:html:close', (html, { event }) => {
+    const rules = resolveSecurityRules(event)
+    const nonce = event.context.security?.nonce
+    if (!rules.enabled || !rules.nonce || !nonce) return
+    html.bodyAppend = html.bodyAppend.map(element => injectNonceToTags(element, nonce))
+  })
+
 })

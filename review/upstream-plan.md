@@ -4,11 +4,13 @@
 
 這是有優先序的修復／驗收計畫；列出項目不代表已完成。原始報告的版本與重現需以目前程式和測試重新確認。主線已修項目、重複 PR、功能要求與部署限制分開判讀。
 
+後續實作已涵蓋 docs、Nitro 3、streaming、Redis、bytes gate、islands 與部署產物；下列文字保留原始設計脈絡，最新完成狀態與限制請見 [validation.md](./validation.md)。真實雲端及 Turnstile／PGlite reproduction 尚無目標，不能由本機測試代為結案。
+
 ## 驗收門檻
 
 - 每個修復要有可重現缺陷的測試，合法流量不得遭誤擋；不得靠放寬 CSP／CORS／認證消除錯誤。
 - 根目錄以 Nuxt 4.6.4 驗證 lint、prepare、unit／integration、package build；記錄 exit code 和實際依賴版本。
-- docs 獨立處理 Nuxt 4、Content 2 與舊 UI Pro 的相容性及兩份 lockfile，未完成前不能宣稱全專案升級完畢。
+- docs 獨立驗證 Nuxt 4、Content 3、UI 4 與 Zod 4 migration，保留獨立 lockfile 與 audit／browser gates。
 - Windows 本機通過不等同 Linux、Cloudflare、Vercel、Bun 或 browser streaming 已通過。
 
 ## P0 — 請求安全與資料完整性 / Request security
@@ -174,7 +176,9 @@
 - [PR #714: chore(deps): bump devalue from 5.1.1 to 5.8.1 in /docs](https://github.com/Baroshem/nuxt-security/pull/714)
   - 文件網站依賴：與 Nuxt／Content／UI migration 一起更新獨立 lockfile，檢查 advisory、build 與搜尋／導航 browser smoke test。
 
-## 原始碼審查額外發現與待辦
+## 原始碼審查額外發現與原始待辦
+
+下列 source／CI 工作已在後續修復並補測，具體證據見 validation.md；保留此節作為問題來源紀錄。
 
 - P1：限流 storage 仍是 read／modify／write，跨 worker／多 instance 不具原子性；下一步需設計 driver 的 atomic consume 契約及並發測試，不能將序列測試通過解讀為分散式限流保證。
 - P1：request size limiter 目前依賴 Content-Length，且方法清單未涵蓋 PATCH；缺少標頭或 chunked body 的實際 bytes gate 與 raw-stream 相容性需一起設計，補超限、等於上限、缺失／非法長度及 PATCH 測試。

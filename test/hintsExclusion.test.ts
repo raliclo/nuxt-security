@@ -5,9 +5,11 @@ vi.mock('@nuxt/kit', async (importOriginal) => {
   const actual = await importOriginal()
   return {
     ...actual,
+    resolveServerVariant: vi.fn(() => "nitro2"),
     importModule: vi.fn(actual.importModule),
     hasNuxtModule: vi.fn((name) => name === '@nuxt/hints'),
     addServerHandler: vi.fn(),
+    addPlugin: vi.fn(),
     addVitePlugin: vi.fn(),
     addServerPlugin: vi.fn(),
     createResolver: () => ({ resolve: (p) => p }),

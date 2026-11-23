@@ -134,8 +134,7 @@ describe('[nuxt-security] Nonce', async () => {
     expect(hasNonce).toBe(false)
   })
 
-  // TODO: reenable if it's possible for island context to share the same `event.context.security.nonce`
-  it.skip('works with server-only components', async () => {
+  it('works with server-only components', async () => {
     const res = await fetch('/server-component')
 
     const cspHeaderValue = res.headers.get('content-security-policy')
@@ -147,5 +146,17 @@ describe('[nuxt-security] Nonce', async () => {
     expect(res).toBeTruthy()
     expect(nonce).toBeDefined()
     expect(text).toMatch(`<span id="server-nonce">${nonce}</span>`)
+  })
+  it('isolates parallel island renders and ignores HTTP nonce spoofing', async () => {
+    const responses = await Promise.all([fetch('/server-component', { headers: { 'x-nuxt-security-nonce': 'attacker-controlled' } }), fetch('/server-component')])
+    const nonces: string[] = []
+    for (const response of responses) {
+      const nonce = response.headers.get('content-security-policy')?.match(/'nonce-(.*?)'/)?.[1]
+      expect(nonce).toBeTruthy()
+      expect(nonce).not.toBe('attacker-controlled')
+      expect(await response.text()).toContain(`<span id="server-nonce">${nonce}</span>`)
+      nonces.push(nonce!)
+    }
+    expect(nonces[0]).not.toBe(nonces[1])
   })
 })

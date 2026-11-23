@@ -5,6 +5,8 @@ import { hasUnsafeXssPayload } from '../src/utils/xss'
 const filter = new FilterXSS()
 describe('XSS payload values / XSS 輸入值', () => {
   it.each([
+    { query: "SELECT * WHERE navigation <> 'false'" },
+    { content: '1 < 2 and 3 > 1' },
     { content: '<p>Hello <strong>world</strong></p>' },
     { content: '<a href="https://example.com">link</a>' },
     { content: '<a title="hello">text</a>' },

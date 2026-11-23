@@ -7,7 +7,8 @@ export function hasUnsafeXssPayload(value: unknown, filter: FilterXSS): boolean 
   while (pending.length) {
     const current = pending.pop()
     if (typeof current === 'string') {
-      if (filter.process(current) !== current) return true
+      // Comparisons such as SQL's <> are data, not HTML tags. / SQL 的 <> 等比較運算是資料而非 HTML tag。
+      if (/<(?:[a-z][\w:-]*|\/[a-z][\w:-]*|!--|!doctype)(?:[\s/>]|$)/i.test(current) && filter.process(current) !== current) return true
     } else if (current && typeof current === 'object' && !ArrayBuffer.isView(current)) {
       if (visited.has(current)) continue
       visited.add(current)

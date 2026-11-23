@@ -40,6 +40,12 @@ describe('rate limiter lifecycle / 限流生命週期', () => {
     state.rules.rateLimiter.tokensPerInterval = 2
     vi.spyOn(Date, 'now').mockReturnValue(1000)
   })
+  it('fails closed when persisted counters are corrupted', async () => {
+    await handler(event)
+    const key = [...state.values.keys()][0]
+    state.values.set(key, { value: Number.NaN, date: 1000 })
+    await expect(handler(event)).rejects.toMatchObject({ statusCode: 503 })
+  })
 
   it('counts exactly two requests in both the first and renewed interval', async () => {
     for (const now of [1000, 2000]) {

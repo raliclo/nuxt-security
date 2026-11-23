@@ -4,6 +4,8 @@ Snapshot: 2026-11-23, Baroshem/nuxt-security at d074467. Target fork: raliclo/nu
 
 This is a repair/acceptance plan, not a completion checklist. See [the Traditional Chinese counterpart](./upstream-plan.md) for priorities and [validation](./validation.md) for executed evidence. Existing-main fixes, overlapping PRs, new features and external platform limits must not be reported as one set of completed fixes.
 
+The follow-up implements docs migration, native Nitro 3, streaming, Redis, bounded bodies, islands and deployment artifacts. The dispositions below retain their original design context; consult validation.en.md for current evidence. Live cloud and Turnstile/PGlite reproduction targets are still unavailable.
+
 ## Acceptance
 
 Each behavior change needs a regression covering valid and hostile/boundary input. Keep secure defaults. Validate current stable Nuxt 4.6.4 with actual Nitro/h3/Vite versions, prepare, lint, tests and package build. Verify docs independently: its old Content/UI stack and separate lockfile require a coordinated migration. Windows tests do not establish Linux, Node LTS, Bun, streaming or deployment-preset behavior.

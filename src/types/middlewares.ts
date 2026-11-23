@@ -11,6 +11,9 @@ export type RequestSizeLimiter = {
 };
 
 export type RateLimiter = {
+  /** Redis atomic counter shared by all instances. / 所有 instance 共用的 Redis 原子計數器。 */
+  redis?: { url: string; prefix?: string };
+
   tokensPerInterval?: number;
   interval?: string | number;
   driver?: {
@@ -40,6 +43,7 @@ export type XssValidator = {
 };
 
 export type BasicAuth = {
+  route?: string;
   exclude?: string[];
   include?: string[];
   name: string;

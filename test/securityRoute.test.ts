@@ -34,3 +34,13 @@ describe('security route counters / 安全路由計數範圍', () => {
     expect(resolveSecurityRoute(event('/'))).toBe('/**')
   })
 })
+
+it('isolates per-request runtime overrides without mutating shared rules', () => {
+  const first = event('/')
+  first.context.security = { globalRules: { enabled: true, rateLimiter: { tokensPerInterval: 1 } } }
+  const second = event('/')
+  second.context.security = { globalRules: { enabled: true, rateLimiter: { tokensPerInterval: 3 } } }
+  expect(resolveSecurityRules(first).rateLimiter).toMatchObject({ tokensPerInterval: 1 })
+  expect(resolveSecurityRules(second).rateLimiter).toMatchObject({ tokensPerInterval: 3 })
+  expect(getAppSecurityOptions()['/**'].rateLimiter).toMatchObject({ tokensPerInterval: 20 })
+})
