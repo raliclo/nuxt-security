@@ -1,16 +1,19 @@
 {
-  "name": "nuxt-security",
-  "version": "2.7.0",
+  "name": "next-security-new",
+  "version": "3.0.0-rc.0",
   "license": "MIT",
   "type": "module",
   "engines": {
     "node": ">=24.0.0"
   },
-  "homepage": "https://nuxt-security.vercel.app",
-  "description": "🛡️ Security Module for Nuxt based on HTTP Headers and Middleware",
+  "homepage": "https://github.com/raliclo/nuxt-security#readme",
+  "description": "Nuxt security module fork with runtime hardening and compatibility regressions",
   "repository": {
-    "url": "https://github.com/Baroshem/nuxt-security"
+    "type": "git",
+    "url": "git+https://github.com/raliclo/nuxt-security.git"
   },
+  "bugs": { "url": "https://github.com/raliclo/nuxt-security/issues" },
+  "publishConfig": { "access": "public", "registry": "https://registry.npmjs.org/", "tag": "next" },
   "keywords": [
     "nuxt",
     "vue",
@@ -34,7 +37,8 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "PUBLISHING.md"
   ],
   "scripts": {
     "prepack": "nuxt-module-build build",
@@ -46,7 +50,7 @@
     "dev:preview": "nuxi preview playground",
     "dev:docs": "rm -rf dist && cd docs && yarn dev",
     "lint": "eslint .",
-    "release": "yarn lint && yarn test && yarn prepack && changelogen --release && npm publish && git push --follow-tags",
+    "release": "yarn lint && yarn test --maxWorkers=2 && yarn prepack",
     "test": "vitest run --silent",
     "test:watch": "vitest watch",
     "test:compat": "vitest run --config vitest.compat.config.ts",

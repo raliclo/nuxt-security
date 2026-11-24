@@ -22,7 +22,7 @@ export * from './types/middlewares'
 
 export default defineNuxtModule<ModuleOptions>({
   meta: {
-    name: 'nuxt-security',
+    name: 'next-security-new',
     configKey: 'security'
   },
   async setup (options, nuxt) {

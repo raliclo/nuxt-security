@@ -1,6 +1,6 @@
 # Publishing next-security-new
 
-Chinese: [release-plan.md](./release-plan.md). This is a plan; no rename or npm publication is performed in this change.
+Chinese: [release-plan.md](./release-plan.md). This release branch prepares `next-security-new@3.0.0-rc.0`; no npm publication has occurred. See PUBLISHING.md for the concrete commands.
 
 Use the requested name `next-security-new` for this Nuxt module. The registry returned HTTP 404 on 2026-11-23; this neither reserves the name nor proves account ownership. Recheck availability, ownership, 2FA and trusted-publishing configuration before release, or use an owned scope.
 

@@ -1,6 +1,6 @@
 # next-security-new 發布計畫
 
-英文：[release-plan.en.md](./release-plan.en.md)。這是發布計畫；本輪不改套件名稱、不執行 npm publish。
+英文：[release-plan.en.md](./release-plan.en.md)。此 release 分支已準備 `next-security-new@3.0.0-rc.0`；尚未執行 npm publish。實際操作見根目錄 PUBLISHING.md。
 
 ## 套件身分
 
