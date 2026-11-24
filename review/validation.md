@@ -65,7 +65,7 @@ yarn vitest run test/rateLimiter.unit.test.ts test/securityRoute.test.ts
 - SSG HTML headers 不再被同路徑 payload JSON 覆寫；不匯出 prerender 內部的 permissive CORS header。Windows cache driver 的 file URL 改以 build alias 解析，保留 Node runtime 的合法 file URL。
 - Vercel 產物測 HTML CSP hashes、content type、移除 X-Powered-By 與 ISR payload 設定；Cloudflare 以 Miniflare/workerd 測 SSR nonce，另驗 static headers。Cloudflare 重疊規則先 detach 再 set；超過平台上限時明確拒絕建置。Bun 1.4.4 實際啟動 fixture，測 SSR nonce 與 SSG hashes。
 - `yarn lint`、`yarn dev:prepare`、`yarn prepack` 均 exit 0。最新完整 `yarn test --maxWorkers=2`：33 files、256 tests 全部通過，無 skip。dist consumer 的 Vercel／Cloudflare／Bun／Nitro 3 建置成功；最終相容性 runtime／瀏覽器／Redis／schema 測試 7 files、12 tests 通過。
-- CI actions 改用已查核的 commit SHA；增加獨立 docs／Nitro 3 lockfile 安裝、Redis service、Bun、Playwright 與 dist consumer 建置。CI 的 Linux／Node 24 結果需等待 GitHub Actions 實際執行。
+- CI actions 改用已查核的 commit SHA；增加獨立 docs／Nitro 3 lockfile 安裝、Redis service、Bun、Playwright 與 dist consumer 建置。後續 Linux 結果見下方 2026-11-24 紀錄。
 
 設定與重跑步驟：[compatibility.md](./compatibility.md)。npm 發布計畫：[release-plan.md](./release-plan.md)。
 
@@ -86,3 +86,7 @@ yarn vitest run test/rateLimiter.unit.test.ts test/securityRoute.test.ts
 ## Dependabot
 
 已透過 GitHub API 啟用 fork 的 vulnerability alerts 與 automated security fixes；GET 驗證 alerts HTTP 204、security fixes enabled=true／paused=false。每週一台北時間 09:00 的 npm/Yarn 與 GitHub Actions 設定已實際寫入預設分支：[設定 commit](https://github.com/raliclo/nuxt-security/commit/bf4d1afc1272381c9f56df3a67acd93a505f5517)。directories 包含 root、docs 與 compat wildcard；相容的 minor/patch 更新及 security updates 分組，未設定自動合併。安全警示以預設分支為準，本修復分支尚未合併前，main 的舊依賴仍可能出現警示。
+
+## Linux CI 驗收 — 2026-11-24
+
+乾淨 checkout 的 compatibility job 原先因未產生 `.nuxt/tsconfig.json` 而在 prepack 失敗；commit `c5ddc99` 補上 `yarn dev:prepare`。重跑的 [GitHub Actions](https://github.com/raliclo/nuxt-security/actions/runs/45304207919) 全部成功：Linux／Node 24、Node 26 主測試各 33 files／256 tests；compatibility 7 files／12 tests。三份依賴圖 audit 都為 0，prepare、lint、package 與所有相容性 fixture 建置均完成。這補足 Linux／Node LTS 的實際執行證據，仍不代表真實雲端部署已驗收。

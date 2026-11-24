@@ -67,7 +67,7 @@ Generated dist files and test logs are excluded from the commit.
 - Prerender payloads cannot overwrite HTML headers; internal permissive CORS headers are not exported. Windows cache drivers retain valid runtime file URLs and use build aliases.
 - Vercel artifact tests cover CSP hashes, HTML type, powered-by removal and ISR payload configuration. Cloudflare workerd tests exercise SSR and static exports; overlapping headers detach before setting and unsupported platform limits fail builds. Bun 1.4.4 runs SSR/SSG checks.
 - Prepare, lint and prepack exit 0. The latest full root run has 33 files and 256 passing tests, no skips. Dist consumer builds succeed for native Nitro 3, Vercel, Cloudflare and Bun; the final compatibility run passes seven files/12 tests, including the schema regression.
-- CI uses verified action commit SHAs and adds independent installs, Redis, Bun, Playwright and dist consumers. Linux/Node 24 results require an actual GitHub Actions run.
+- CI uses verified action commit SHAs and adds independent installs, Redis, Bun, Playwright and dist consumers. See the 2026-11-24 Linux run below for executed evidence.
 
 Configuration: [compatibility.en.md](./compatibility.en.md). Publishing plan: [release-plan.en.md](./release-plan.en.md).
 
@@ -88,3 +88,7 @@ Final npm audits for all three projects exit 0 with zero findings; all three Yar
 ## Dependabot
 
 Fork vulnerability alerts and automated security fixes were enabled through GitHub API and verified: alerts HTTP 204, fixes enabled=true/paused=false. The default branch now contains the weekly Monday 09:00 Asia/Taipei npm/Yarn and GitHub Actions configuration: [configuration commit](https://github.com/raliclo/nuxt-security/commit/bf4d1afc1272381c9f56df3a67acd93a505f5517). It covers root, docs and compat wildcards, groups compatible and security updates, and does not enable automatic merging. Alerts track the default branch; its older dependencies may remain flagged until this fixes branch is merged.
+
+## Linux CI acceptance — 2026-11-24
+
+The clean-checkout compatibility job initially lacked generated `.nuxt/tsconfig.json`. Commit `c5ddc99` adds `yarn dev:prepare` before prepack. The subsequent [GitHub Actions run](https://github.com/raliclo/nuxt-security/actions/runs/45304207919) succeeds completely: Linux/Node 24 and Node 26 each pass 33 files/256 tests; compatibility passes seven files/12 tests. All three dependency audits report zero findings, and prepare, lint, packaging and compatibility fixture builds complete. This establishes actual Linux/LTS evidence, not live cloud acceptance.
