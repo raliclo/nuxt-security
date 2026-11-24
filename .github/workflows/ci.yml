@@ -83,6 +83,7 @@ jobs:
           yarn --cwd compat/nitro3 audit --level moderate
       - name: Build package and compatibility fixtures
         run: |
+          yarn dev:prepare
           yarn prepack
           yarn --cwd compat/nitro3 build
           yarn --cwd docs build
