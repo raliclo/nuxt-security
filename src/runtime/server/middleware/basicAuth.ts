@@ -1,6 +1,6 @@
 import { createError, defineEventHandler, getRequestHeader, setHeader, useRuntimeConfig } from '#nuxt-security/server'
-// @ts-ignore : the basic-auth module does not export types
-import getCredentials from 'basic-auth'
+// @ts-ignore : basic-auth 3.x exports ESM parse without types in exports map
+import { parse as parseCredentials } from 'basic-auth'
 
 type Credentials = {
   name: string;
@@ -17,7 +17,8 @@ export type BasicAuth = {
 }
 
 export default defineEventHandler((event) => {
-  const credentials = getCredentials.parse(getRequestHeader(event, 'authorization'))
+  const authorization = getRequestHeader(event, 'authorization')
+  const credentials = typeof authorization === 'string' ? parseCredentials(authorization) : undefined
   const securityConfig = useRuntimeConfig(event).private
   const basicAuthConfig = securityConfig.basicAuth
 
